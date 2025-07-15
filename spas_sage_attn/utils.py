@@ -270,7 +270,9 @@ def get_block_map_meansim(q, k, is_causal=False, BLKQ=128, BLKK=64, simthreshd1=
         lut, valid_block_num = block_map_lut_triton(final_map)
         return lut, valid_block_num
 
-def get_block_map_meansim_fuse_quant(q, k, km=None, is_causal=False, BLKQ=128, BLKK=64, simthreshd1=0.1, cdfthreshd=0.9, is_sparse=True, return_lut=False, attention_sink=False):
+def get_block_map_meansim_fuse_quant(q, k, km=None, is_causal=False, BLKQ=128, BLKK=64, simthreshd1=0.1, cdfthreshd=0.9, is_sparse=True, return_lut=False, attention_sink=0):
+    # change: attention_sink was bool, now int 
+    # attention_sink (int) means how many tokens from the beginning of the sequence to sink 
     Headnum = q.size(1)
     simthreshd1 = hyperparameter_check(simthreshd1, Headnum, q.device)
     cdfthreshd = hyperparameter_check(cdfthreshd, Headnum, q.device)
@@ -303,8 +305,9 @@ def get_block_map_meansim_fuse_quant(q, k, km=None, is_causal=False, BLKQ=128, B
     if is_causal:
         final_map = final_map * causal_mask[None, None, ...]
 
-    if attention_sink:
-        final_map[:, :, :, 0] = 1
+    if attention_sink > 0:
+        num_sink_blocks = (attention_sink + BLKK - 1) // BLKK
+        final_map[:, :, :, :num_sink_blocks] = 1
     
     if not return_lut:
         return final_map, q_int8, q_scale, k_int8, k_scale
