@@ -83,7 +83,8 @@ def per_block_int8(q, k, BLKQ=128, BLKK=64, sm_scale=None, tensor_layout="HND"):
         stride_bz_q, stride_h_q, stride_seq_q,
         stride_bz_qo, stride_h_qo, stride_seq_qo,
         q_scale.stride(0), q_scale.stride(1),
-        sm_scale=(sm_scale * 1.44269504),
+        # sm_scale=(sm_scale * 1.44269504),
+        sm_scale=1.0,  # add: change from the commented line to this to match get_block_map_meansim_fuse_quant()
         C=head_dim, BLK=BLKQ
     )
 
